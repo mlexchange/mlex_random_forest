@@ -1,0 +1,39 @@
+﻿{
+  "model_name": "random_forest",
+  "version": "1.0.0",
+  "type": "supervised",
+  "user": "mlexchange-team",
+  "uri": "https://www.xxx",
+  "application": [
+    "image_segmentation",
+    "classification",
+    "regression"
+  ],
+  "description": "xxx",
+  "gui_parameters": [
+    {
+      "type": "int",
+      "name": "num-of-trees",
+      "title": "number of trees",
+      "value": "50"
+    },
+    {
+      "type": "slider",
+      "name": "tree-depth",
+      "title": "max tree depth",
+      "min": 2,
+      "max": 50,
+      "step": 1,
+      "value": 8,
+      "marks": {
+        "2": "2",
+        "10": "10",
+        "20": "20",
+        "30": "30",
+        "40": "40",
+        "50": "50"
+      }
+    }
+  ],
+  "cmd": []
+}
