@@ -1,5 +1,5 @@
 FROM python:3.9
-MAINTAINER TANNY CHAVEZ
+MAINTAINER THE MLEXCHANGE TEAM
 
 #COPY requirements.txt requirements.txt
 # if run with docker context in main folder
