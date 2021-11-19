@@ -31,7 +31,7 @@ train_example:
 	docker run -u ${ID_USER $USER}:${ID_GROUP $USER} --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --memory-swap -1 -it -v ${PWD}:/app/work/ ${IMG_WEB_SVC} python random_forest.py data/masks data/features data/models '{"n_estimators": 50, "oob_score": true, "max_depth": 8}'
 
 test_example:
-	docker run -u ${ID_USER $USER}:${ID_GROUP $USER} --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --memory-swap -1 -it -v ${PWD}:/app/work/ ${IMG_WEB_SVC} python segment.py data/images/raw/segment_series.tif data/models/random-forest.model data/out '{}' #'{"show_progress": 20}'  # parameters need to confirm to the JSON data schema
+	docker run -u ${ID_USER $USER}:${ID_GROUP $USER} --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --memory-swap -1 -it -v ${PWD}:/app/work/ ${IMG_WEB_SVC} python segment.py data/images/raw/segment_series.tif data/models/random-forest.model data/out '{"show_progress": 20}'  # parameters need to confirm to the JSON data schema
 
 
 

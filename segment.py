@@ -52,8 +52,12 @@ if __name__ == "__main__":
         features = features.reshape(features.shape[0], features.shape[1]*features.shape[2]).T
         output = clf.predict(features)
         output_im = output.reshape(im.shape) #reassemble list of masked pixels into an image
-        output_f_name = OUTPUT_DIR / '{}-.dat'.format(index)
+        
+        io_path = pathlib.Path(args.output_dir)
+        io_path.mkdir(parents=True, exist_ok=True)
+        
         if index % parameters.show_progress == 0:
+            output_f_name = OUTPUT_DIR / '{}-.dat'.format(index)
             np.savetxt(str(output_f_name), output_im)
             imageio.imsave(str(OUTPUT_DIR / '{}-classified.tif'.format(index)), output_im) 
             print('classified: {}'.format(index))
