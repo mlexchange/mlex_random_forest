@@ -60,7 +60,7 @@ if __name__ == "__main__":
             output_f_name = OUTPUT_DIR / '{}-.dat'.format(index)
             np.savetxt(str(output_f_name), output_im)
             imageio.imsave(str(OUTPUT_DIR / '{}-classified.tif'.format(index)), output_im) 
-            print('classified: {}'.format(index))
+            print('classified\t{}'.format(index))
     
     # segmentation for all images
     Parallel(n_jobs=-1)(delayed(seg_image)(im_stack[i], i) for i in range(len(im_stack)))
