@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
     ### CHECK THAT n_features == n_images
     assert(len(all_features) == len(all_mask))
-    train_features = all_features[ all_mask>0,:]
-    train_mask = all_mask[all_mask >0]
+    train_features = all_features[ all_mask>-1,:]
+    train_mask = all_mask[all_mask > -1]
 
     # Load training parameters
     if args.parameters is not None:
