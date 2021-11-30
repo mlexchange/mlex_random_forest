@@ -8,6 +8,7 @@ import PIL.Image
 import joblib
 
 import json
+from feature_generation import img_to_ubyte_array, multiscale_basic_features
 from model_validation import TrainingParameters, Metadata
 
 """ Train a random forest classifier
@@ -16,15 +17,6 @@ from model_validation import TrainingParameters, Metadata
 
 code from: https://github.com/plotly/dash-sample-apps/blob/d96997bd269deb4ff98b810d32694cc48a9cb93e/apps/dash-image-segmentation/trainable_segmentation.py#L130
 """
-def img_to_ubyte_array(img):
-    """
-    PIL.Image.open is used so that a io.BytesIO object containing the image data
-    can be passed as img and parsed into an image. Passing a path to an image
-    for img will also work.
-    """
-    ret_ = skimage.util.img_as_ubyte(np.array(PIL.Image.open(img)))
-    return ret_
-
 
 # def fit_segmenter(labels, features, clf):
 #     """
@@ -69,23 +61,50 @@ def img_to_ubyte_array(img):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    
+    # reading args for feature generation
+    parser.add_argument('image_dir', help='image filepath')
+    parser.add_argument('feature_dir', help='output filepath')
+    
+    # reading args for training
     parser.add_argument('mask_dir', help='path to mask directory')
-    parser.add_argument('feature_dir', help = 'path to feature directory')
     parser.add_argument('model_dir', help = 'path to model (output) directory')
     parser.add_argument('parameters', help='dictionary that contains training parameters')
-
+    
     args = parser.parse_args()
-
+    
+    images_path = pathlib.Path(args.image_dir)
+    feature_dir = pathlib.Path(args.feature_dir)
+    mask_dir = pathlib.Path(args.mask_dir)
     model_dir = pathlib.Path(args.model_dir)
-    ### READ IN FEATURE LIST ###
-    feature_glob = pathlib.Path(args.feature_dir)
+    model_dir.mkdir(parents=True, exist_ok=True)
 
-    f_list = [np.genfromtxt(f) for f in feature_glob.glob("*feature")]
+    ###INPUT_ARGS_HARDCORE
+    feature_list = {'intensity': True,
+                    'edges': False,
+                    'texture': False}
+
+    for im in images_path.glob('*.tif'):    # this only takes the labeled images (*_for_training.tif)
+        im_name_root = im.name.strip(im.suffix)
+        image = img_to_ubyte_array(im)
+        features = multiscale_basic_features(
+                image,
+                multichannel=False,
+                intensity=feature_list['intensity'],
+                edges=feature_list['edges'],
+                texture=feature_list['texture']
+                )
+        num_features = features.shape[0]
+        feature_out_name = str(feature_dir / im_name_root)+'.feature'
+        np.savetxt(feature_out_name, features.reshape(num_features,-1))
+        print('features generated for: {}\n'.format(feature_out_name))
+
+
+    f_list = [np.genfromtxt(f) for f in feature_dir.glob("*feature")]
     all_features =np.concatenate(f_list, axis=-1).T
 
     ### READ IN IMAGE LIST ###
-    mask_glob = pathlib.Path(args.mask_dir)
-    mask_list = [np.genfromtxt(im).ravel() for im in mask_glob.glob('n-*')]
+    mask_list = [np.genfromtxt(im).ravel() for im in mask_dir.glob('n-*')]
     all_mask = np.concatenate(mask_list)
 
 
@@ -98,7 +117,7 @@ if __name__ == "__main__":
     if args.parameters is not None:
         parameters = TrainingParameters(**json.loads(args.parameters))
         
-    print(f'parameters.oob_score: {parameters.oob_score}')
+    print(f'parameters.oob_score: {parameters.oob_score}\n')
     ### CREATE RANDOM FOREST CLF ###
     #clf = RandomForestClassifier(n_estimators=50, oob_score=True, n_jobs=-1, max_depth=8, max_samples=0.05)
     clf = RandomForestClassifier(n_estimators=parameters.n_estimators, 
@@ -115,6 +134,6 @@ if __name__ == "__main__":
         
     model_output_name = model_dir / 'random-forest.model'
     joblib.dump(clf, model_output_name)
-    print('trained random forest: {}'.format(model_output_name))
+    print('trained random forest: {}\n'.format(model_output_name))
     
 

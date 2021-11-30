@@ -8,8 +8,8 @@ import imageio
 import PIL.Image
 from joblib import Parallel, delayed
 import joblib
-import feature_generation
 
+from feature_generation import img_to_ubyte_array, multiscale_basic_features
 from model_validation import TestingParameters
 import json
 
@@ -32,22 +32,24 @@ if __name__ == "__main__":
     MODEL_F = pathlib.Path(args.model_f)
     IMAGE_STACK = pathlib.Path(args.image_stack)
     OUTPUT_DIR = pathlib.Path(args.output_dir)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     # Load testing parameters
     parameters = TestingParameters(**json.loads(args.parameters))
 
     # read in tiff stack to work on
+    #im_stack = img_to_ubyte_array(im)
     im_stack = imageio.volread(IMAGE_STACK)
 
     # read in model file
     clf = joblib.load(MODEL_F)
     def seg_image(im,index):
-        features = feature_generation.multiscale_basic_features(
-                                                                    im,
-                                                                    multichannel=False,
-                                                                    intensity=True,
-                                                                    edges=False,
-                                                                    texture=False,
+        features = multiscale_basic_features(
+                                                im,
+                                                multichannel=False,
+                                                intensity=True,
+                                                edges=False,
+                                                texture=False,
                                                                 )
         features = features.reshape(features.shape[0], features.shape[1]*features.shape[2]).T
         output = clf.predict(features)

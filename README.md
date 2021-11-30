@@ -10,8 +10,7 @@ First, build the segMSDnet image in terminal:
 `cd mlex_random_forest`    
 `make build_docker`
   
-Once built, you can run the following examples:  
-`make feature_example`  
+Once built, you can run the following examples:   
 `make train_example`  
 `make test_example`  
 
