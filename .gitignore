@@ -2,3 +2,4 @@
 __pycache__/*
 data/out/
 data/models/*
+training_logs.txt
