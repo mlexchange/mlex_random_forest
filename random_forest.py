@@ -77,6 +77,7 @@ if __name__ == "__main__":
     feature_dir = pathlib.Path(args.feature_dir)
     mask_dir = pathlib.Path(args.mask_dir)
     model_dir = pathlib.Path(args.model_dir)
+    model_dir.mkdir(parents=True, exist_ok=True)
 
     ###INPUT_ARGS_HARDCORE
     feature_list = {'intensity': True,

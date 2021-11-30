@@ -32,6 +32,7 @@ if __name__ == "__main__":
     MODEL_F = pathlib.Path(args.model_f)
     IMAGE_STACK = pathlib.Path(args.image_stack)
     OUTPUT_DIR = pathlib.Path(args.output_dir)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     # Load testing parameters
     parameters = TestingParameters(**json.loads(args.parameters))
