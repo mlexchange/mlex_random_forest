@@ -17,14 +17,19 @@ to generate. Each feature corresponds to a column in the outputed feature matrix
 which is then saved to a file.
 code from: https://github.com/plotly/dash-sample-apps/blob/d96997bd269deb4ff98b810d32694cc48a9cb93e/apps/dash-image-segmentation/trainable_segmentation.py#L64
 """
-
 def img_to_ubyte_array(img):
     """
     PIL.Image.open is used so that a io.BytesIO object containing the image data
     can be passed as img and parsed into an image. Passing a path to an image
     for img will also work.
     """
-    ret_ = skimage.util.img_as_ubyte(np.array(PIL.Image.open(img)))
+    img2convert = np.array(PIL.Image.open(img))
+    if np.issubdtype(img2convert.dtype, np.floating) and np.max(img2convert)>1:
+        max_value = max(img2convert)
+        min_value = min(img2convert)
+        img2convert = np.multiply(img2convert,1/(max_value - min_value))
+    ret_ = skimage.util.img_as_ubyte(img2convert)
+    
     return ret_
 
 def _texture_filter(gaussian_filtered):
@@ -132,34 +137,3 @@ def multiscale_basic_features(
             sigma_max=sigma_max,
         )
     return np.array(features, dtype=np.float32)
-
-if __name__ == '__main__':
-    # get dir, and feature extract all images
-
-    ### GLOBAL VARIABLES ###
-    parser = argparse.ArgumentParser()
-    parser.add_argument('image_dir', help='image filepath')
-    parser.add_argument('feature_dir', help='output filepath')
-    args = parser.parse_args()
-    OUTPUT_FEATURE_DIR = pathlib.Path(args.feature_dir)
-    images_path = pathlib.Path(args.image_dir)
-
-    ###INPUT_ARGS_HARDCORE
-    feature_list = {'intensity': True,
-                    'edges': False,
-                    'texture': False}
-
-    for im in images_path.glob('*.tif'):    # this only takes the labeled images (*_for_training.tif)
-        im_name_root = im.name.strip(im.suffix)
-        image = img_to_ubyte_array(im)
-        features = multiscale_basic_features(
-                image,
-                multichannel=False,
-                intensity=feature_list['intensity'],
-                edges=feature_list['edges'],
-                texture=feature_list['texture']
-                )
-        num_features = features.shape[0]
-        feature_out_name = str(OUTPUT_FEATURE_DIR / im_name_root)+'.feature'
-        np.savetxt(feature_out_name, features.reshape(num_features,-1))
-        print('features generated for: {}'.format(feature_out_name))

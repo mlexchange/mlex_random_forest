@@ -24,5 +24,4 @@ COPY feature_generation.py feature_generation.py
 COPY random_forest.py random_forest.py
 COPY model_validation.py model_validation.py
 COPY segment.py segment.py
-COPY wrapper.py wrapper.py
 CMD ["echo", "running random forest"]
