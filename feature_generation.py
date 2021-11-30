@@ -3,6 +3,7 @@ import skimage
 import argparse
 from skimage import filters, feature
 import pathlib
+import imageio
 
 import PIL.Image
 from joblib import Parallel, delayed
@@ -23,14 +24,7 @@ def img_to_ubyte_array(img):
     can be passed as img and parsed into an image. Passing a path to an image
     for img will also work.
     """
-    img2convert = np.array(PIL.Image.open(img))
-    if np.issubdtype(img2convert.dtype, np.floating) and np.max(img2convert)>1:
-        max_value = max(img2convert)
-        min_value = min(img2convert)
-        img2convert = np.multiply(img2convert,1/(max_value - min_value))
-    ret_ = skimage.util.img_as_ubyte(img2convert)
-    
-    return ret_
+    return imageio.imread(img)
 
 def _texture_filter(gaussian_filtered):
     H_elems = [
