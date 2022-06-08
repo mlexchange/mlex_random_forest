@@ -6,6 +6,7 @@ import pathlib
 import imageio
 
 import PIL.Image
+import tifffile
 from joblib import Parallel, delayed
 import joblib
 
@@ -61,7 +62,8 @@ if __name__ == "__main__":
         if index % parameters.show_progress == 0:
             output_f_name = OUTPUT_DIR / '{}-.dat'.format(index)
             np.savetxt(str(output_f_name), output_im)
-            imageio.imsave(str(OUTPUT_DIR / '{}-classified.tif'.format(index)), output_im) 
+            output_im = (output_im*255).astype(np.uint8)
+            tifffile.imwrite(str(OUTPUT_DIR / '{}-classified.tif'.format(index)), output_im) 
             print('classified\t{}'.format(index))
     
     # segmentation for all images
