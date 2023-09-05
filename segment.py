@@ -4,6 +4,7 @@ import argparse
 from skimage import filters, feature
 import pathlib
 import imageio
+import glob
 
 import PIL.Image
 import tifffile
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('parameters', help='dictionary that contains testing parameters')
     args = parser.parse_args()
     MODEL_F = pathlib.Path(args.model_f)
-    IMAGE_STACK = pathlib.Path(args.image_stack)
+    IMAGE_DIR = pathlib.Path(args.image_stack)
     OUTPUT_DIR = pathlib.Path(args.output_dir)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
@@ -40,7 +41,15 @@ if __name__ == "__main__":
 
     # read in tiff stack to work on
     #im_stack = img_to_ubyte_array(im)
-    im_stack = imageio.volread(IMAGE_STACK)
+    img_name = glob.glob((str(IMAGE_DIR) + '/*.tif'))
+    img_name = sorted(img_name)
+    im_stack = []
+    for name in img_name:
+        img = imageio.imread(name)
+        im_stack.append(img)
+    im_stack = np.array(im_stack)
+    print(f'Stack size: {im_stack.shape}')    
+    # im_stack = imageio.volread(IMAGE_DIR)
 
     # read in model file
     clf = joblib.load(MODEL_F)
@@ -53,18 +62,18 @@ if __name__ == "__main__":
                                                 texture=False,
                                                                 )
         features = features.reshape(features.shape[0], features.shape[1]*features.shape[2]).T
-        output = clf.predict(features)
+        output = clf.predict(features) + 1 # shift back by 1 to keep consistency with app
         output_im = output.reshape(im.shape) #reassemble list of masked pixels into an image
         
         io_path = pathlib.Path(args.output_dir)
         io_path.mkdir(parents=True, exist_ok=True)
         
         if index % parameters.show_progress == 0:
-            output_f_name = OUTPUT_DIR / '{}-.dat'.format(index)
-            np.savetxt(str(output_f_name), output_im)
-            output_im = (output_im*255).astype(np.uint8)
-            tifffile.imwrite(str(OUTPUT_DIR / '{}-classified.tif'.format(index)), output_im) 
-            print('classified\t{}'.format(index))
+            output_f_name = OUTPUT_DIR / 'seg-{}.npy'.format(index)
+            np.save(str(output_f_name), output_im)
+            #output_im = (output_im*255).astype(np.uint8)
+            tifffile.imwrite(str(OUTPUT_DIR / 'seg-{}.tif'.format(index)), output_im) 
+            print('Segmented\t{}'.format(index))
     
     # segmentation for all images
     Parallel(n_jobs=-1)(delayed(seg_image)(im_stack[i], i) for i in range(len(im_stack)))

@@ -2,6 +2,7 @@ from sklearn.ensemble import RandomForestClassifier
 import argparse
 import pathlib
 import glob
+import imageio
 import skimage
 import numpy as np
 import PIL.Image
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 
     for im in images_path.glob('*.tif'):    # this only takes the labeled images (*_for_training.tif)
         im_name_root = im.name.strip(im.suffix)
-        image = img_to_ubyte_array(im)
+        image = imageio.imread(im)
         features = multiscale_basic_features(
                 image,
                 multichannel=False,
@@ -95,18 +96,17 @@ if __name__ == "__main__":
                 texture=feature_list['texture']
                 )
         num_features = features.shape[0]
-        feature_out_name = str(feature_dir / im_name_root)+'.feature'
-        np.savetxt(feature_out_name, features.reshape(num_features,-1))
+        print(f'num_features: {num_features}')
+        feature_out_name = str(feature_dir / im_name_root)+'-feature.npy'
+        np.save(feature_out_name, features.reshape(num_features,-1))
         print('features generated for: {}\n'.format(feature_out_name))
 
-
-    f_list = [np.genfromtxt(f) for f in feature_dir.glob("*feature")]
+    f_list = [np.load(f) for f in feature_dir.glob("*-feature.npy")]
     all_features =np.concatenate(f_list, axis=-1).T
 
-    ### READ IN IMAGE LIST ###
-    mask_list = [np.genfromtxt(im).ravel() for im in mask_dir.glob('n-*')]
-    all_mask = np.concatenate(mask_list)
-
+    ### READ IN MASK INFO ###
+    mask_list = [np.load(im).astype('int').ravel() for im in mask_dir.glob('mask*.npy')]
+    all_mask = np.concatenate(mask_list) - 1 # shift by 1 to make unlabeled pixels as -1
 
     ### CHECK THAT n_features == n_images
     assert(len(all_features) == len(all_mask))
@@ -117,21 +117,12 @@ if __name__ == "__main__":
     if args.parameters is not None:
         parameters = TrainingParameters(**json.loads(args.parameters))
         
-    print(f'parameters.oob_score: {parameters.oob_score}\n')
+
     ### CREATE RANDOM FOREST CLF ###
-    #clf = RandomForestClassifier(n_estimators=50, oob_score=True, n_jobs=-1, max_depth=8, max_samples=0.05)
     clf = RandomForestClassifier(n_estimators=parameters.n_estimators, 
                                  oob_score=parameters.oob_score, n_jobs=-1, max_depth=parameters.max_depth, max_samples=0.05)
 
     clf.fit(train_features,train_mask)
-    if parameters.oob_score:
-        oob_error = 1 - clf.oob_score_
-        header = list(Metadata.__fields__)
-        with open('training_logs.txt','w') as f:
-            f.write(",".join(header) + "\n")
-            f.write(f'{oob_error}')
-            f.close()
-        
     model_output_name = model_dir / 'random-forest.model'
     joblib.dump(clf, model_output_name)
     print('trained random forest: {}\n'.format(model_output_name))
